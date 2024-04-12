@@ -1,8 +1,10 @@
 from PIL import Image
 import numpy as np
 import cv2 as cv
+import csv
 from pillow_heif import register_heif_opener
-
+from cv2_rolling_ball import subtract_background_rolling_ball
+from datetime import datetime
 IMAGE_NUMBER = 1
 
 #contains all the info to run houghCircles
@@ -47,6 +49,15 @@ def main():
     for i in range(len(images)):
         images[i] = blackout_image(images[i], dishes[i][0][0])
 
+    backgrounds = np.empty(IMAGE_NUMBER, dtype='object')
+    print("Rolling the Ball")
+    for i in range(len(images)):
+        images[i] = cv.resize(images[i], (0, 0), fx = .25, fy = .25, interpolation=cv.INTER_AREA)
+        imgtemp = images[i].copy()
+        images[i], backgrounds[i] = subtract_background_rolling_ball(imgtemp, 10, light_background=True, use_paraboloid=True, do_presmooth=False)
+        images[i] = images[i] * 10
+        images[i], backgrounds[i] = subtract_background_rolling_ball(imgtemp, 10, light_background=True, use_paraboloid=True, do_presmooth=False)
+
     print("Finding Colonies")
     for i in range(len(images)):
         colonies[i] = get_colonies(images[i], newDetection)
@@ -58,6 +69,14 @@ def main():
     for i in range(len(images)):
         images[i] = annotate_image(images[i], colonies[i])
         cv.imwrite('2023-11-21-Annotated/IMG_' + str(i + 4574) + '.jpg', images[i])
+
+    #Make CSV
+    image_names = []
+    image_results = []
+    for i in range(IMAGE_NUMBER):
+        image_names.append("img_" + str(4574 + i))
+        image_results.append(len(colonies[i]))
+    convert_to_CSV(image_names, image_results)
 
 def process_images_from_paths(paths):
     images = []
@@ -178,8 +197,23 @@ def detect_dish(img):
         return circles
     return None
 
+#takes a list of image names and their resulting colony count and creates a excel compatible csv with that info in the output folder
+def convert_to_CSV(img_names, img_results):
+    fields = ["Image", "Colony Count"]
+
+    rows = []
+    for i in range (len(img_names)):
+        rows.append([img_names[i], img_results[i]])
+    
+    filename = "docs\\output\\colony_count_results_" + (datetime.now().strftime("%m-%d-%Y_%H;%M;%S")) + ".csv"
+
+    with open(filename, 'a', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile, dialect='excel')
+        csvwriter.writerow(fields)
+        csvwriter.writerows(rows)
+
 if (__name__ == "__main__"):
-  # main()
+    #main()
     colonies, images = process_images_from_paths(["img1.jpg", "img1.jpg", "2023-11-21\IMG_4605.HEIC"])
     for c in colonies:
         print(len(c[0]))
