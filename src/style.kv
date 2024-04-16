@@ -1,3 +1,4 @@
+#:import Factory kivy.factory.Factory
 <ImageContainerWidget>:
     id: image_container
     canvas.before:
@@ -17,7 +18,7 @@
         Button:
             id: invisible_button
             opacity: 0
-            on_release: root.previewer_update()
+            on_release: root.previewer_update() ; root.on_selection()
         BoxLayout:
             id: swap
             AsyncImage:
@@ -34,6 +35,72 @@
                 font_size: 14
                 size_hint: (0.15, 0.15)
                 on_release: root.remove()
+
+<SaveChangesPopup@Popup>
+    auto_dismiss: False
+    title: ""
+    separator_height: 0
+    size_hint: 0.5, 0.8
+    opacity: 0.7
+    background: ''
+    background_color: (0.5, 0.5, 0.5, 0)  # Makes the default background transparent
+    canvas.before:
+        Color:
+            rgba: (0., 0., 0., 1.)  # Background color
+        RoundedRectangle:
+            size: self.size
+            pos: self.pos
+            radius: [30]
+    GridLayout:
+        rows: 3
+        Label:
+            font_size: 40
+            text_size: self.size
+            padding: 50, 0, 50, 0
+            valign: 'middle'
+            halign: 'center'
+            text: "You have unsaved changes, are you sure that you want to exit? All of your changes will be lost."
+        Label:
+            font_size: 40
+            text_size: self.size
+            padding: 50, 0, 50, 0
+            valign: 'middle'
+            halign: 'center'
+            text: "Select 'Yes' to continue exiting without saving, or select 'No' to return to the Editor."
+        
+        GridLayout:
+            cols:2
+            AnchorLayout:
+                padding: 80, 0, 40, 0
+                Button:
+                    text: "No"
+                    on_release: root.dismiss() ; app.myLayout.tempUse = False
+                    font_size: 50
+                    size_hint: (1, 0.5)
+                    background_color: (0.5, 0.5, 0.5, 0)  # Makes the default button background transparent
+                    canvas.before:
+                        Color:
+                            rgba: (0.3, 0.3, 0.3, 1)  # Button color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [30]
+            AnchorLayout:
+                padding: 40, 0, 80, 0
+                Button:
+                    text: "Yes"
+                    on_release: root.dismiss() ; app.myLayout.activate_exit()
+                    font_size: 50
+                    size_hint: (1, 0.5)
+                    background_color: (0.5, 0.5, 0.5, 0)  # Makes the default button background transparent
+                    canvas.before:
+                        Color:
+                            rgba: (0.3, 0.3, 0.3, 1)  # Button color
+                        RoundedRectangle:
+                            size: self.size
+                            pos: self.pos
+                            radius: [30]
+            
 
 # Contains the previewer window with a zoomable image
 <PreviewerContainer>
@@ -287,6 +354,7 @@
         ScrollView:
             id: image_scroll_view
             size_hint: (0.4, 1)
+            do_scroll_x: False
             canvas.before:
                 Color:
                     rgba: 0.2, 0.2, 0.25, 1

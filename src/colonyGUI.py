@@ -20,6 +20,7 @@ from kivy.uix.button import Button
 from kivy.graphics import Color, RoundedRectangle
 from kivy.uix.label import Label
 from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, ListProperty
+from kivy.factory import Factory
 
 
 import numpy as np
@@ -35,6 +36,7 @@ Builder.load_file("style.kv")
 # Store list of image containers, each item is a reference to a ImageContainerWidget
 imageContainers = []
 swap = 1
+counter = 0
 
 class ImageContainerWidget(BoxLayout):
     source = StringProperty(None)
@@ -44,10 +46,13 @@ class ImageContainerWidget(BoxLayout):
     is_selected = BooleanProperty(False)
     border_color = ListProperty([0, 0, 0, 0])
 
-
     def __init__(self, **kwargs):
         super(ImageContainerWidget, self).__init__(**kwargs)
         self.bind(is_selected=self.update_border_color)
+        global counter
+        counter += 1
+        self.id = counter
+
 
     # def on_touch_down(self, touch):
     #     if self.collide_point(*touch.pos):
@@ -61,14 +66,13 @@ class ImageContainerWidget(BoxLayout):
     #         # Let the event propagate to other widgets
     #         return super(ImageContainerWidget, self).on_touch_down(touch)
         
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
+    def on_selection(self):
+        app = App.get_running_app()
+        if not app.root.ids.prevContainer.edited:
             self.is_selected = True
             if self.is_selected:
                 self.deselect_others()
-            self.my_grid_layout.previewer_update(self)
-
-        return super(ImageContainerWidget, self).on_touch_down(touch)
+                # self.my_grid_layout.previewer_update(self)
 
     def update_border_color(self, instance, value):
         if self.is_selected:
@@ -85,12 +89,8 @@ class ImageContainerWidget(BoxLayout):
     def remove(self):
         # print("remove is called")
         self.parent.remove_widget(self)
-        for i in range(len(imageContainers)):
-            if (imageContainers[i].source == self.source):
-                del imageContainers[i]
-                break
         app = App.get_running_app()
-        app.root.handle_delete()
+        app.root.handle_delete(self.id)
 
     
     # Swap image with processed image and back
@@ -111,8 +111,11 @@ class ImageContainerWidget(BoxLayout):
 
 class PreviewerContainer(Scatter):
     imgRef = None
+    editedColonies = None
 
     replace = None
+    texture = None
+    edited = False
     add_mode = False
     remove_mode = False
     
@@ -172,28 +175,26 @@ class PreviewerContainer(Scatter):
 
     def add_colony(self, pos):
         # Add colony to self.imgRef.colonies at mouse position
+        self.edited = True
         array_pos = np.uint16(np.array([[pos[0], pos[1], 5]]))
-        self.imgRef.colonies = np.array([np.append(self.imgRef.colonies[0], array_pos, 0)])
+        self.editedColonies = np.array([np.append(self.editedColonies[0], array_pos, 0)])
 
         # Update colony counter
         app = App.get_running_app()
-        app.root.infoContainer.ids.colony_count_text.text = str(len(self.imgRef.colonies[0]))
+        app.root.infoContainer.ids.colony_count_text.text = str(len(self.editedColonies[0]))
 
         # Update texture being displayed
-        proc = annotate_image(np.copy(self.imgRef.numpy_image[0]), self.imgRef.colonies)
+        proc = annotate_image(np.copy(self.imgRef.numpy_image[0]), self.editedColonies)
         w, h, _ = proc.shape
         texture = Texture.create(size=(h, w))
         texture.blit_buffer(proc.flatten(), colorfmt='rgb', bufferfmt='ubyte')
         self.texture = texture
         self.replace.texture = texture
-        for container in imageContainers:
-            if (container.source == self.imgRef.source):
-                container.texture = texture
-                container.colonies = self.imgRef.colonies
+        # self.imgRef.texture = texture
     
     def remove_colony(self, pos):
         array_pos = np.cfloat(np.array([[pos[0], pos[1]]]))
-        colin = np.delete(self.imgRef.colonies[0], 2, 1)    # delete third row of colonies with radius sizes
+        colin = np.delete(self.editedColonies[0], 2, 1)    # delete third row of colonies with radius sizes
         colin = colin.astype(float)
 
         # Find nearest colony to mouse location and delete
@@ -202,24 +203,37 @@ class PreviewerContainer(Scatter):
         idx_of_nearest = np.argsort(distances)[0]
 
         # Checks if the cursor is within the radius of the nearest colony
-        if (distances[idx_of_nearest] < self.imgRef.colonies[0][idx_of_nearest][2] + 1):
-            self.imgRef.colonies = np.delete(self.imgRef.colonies, idx_of_nearest, 1)
+        if (distances[idx_of_nearest] < self.editedColonies[0][idx_of_nearest][2] + 1):
+            self.edited = True
+            self.editedColonies = np.delete(self.editedColonies, idx_of_nearest, 1)
 
             # Update colony counter
             app = App.get_running_app()
-            app.root.infoContainer.ids.colony_count_text.text = str(len(self.imgRef.colonies[0]))
+            app.root.infoContainer.ids.colony_count_text.text = str(len(self.editedColonies[0]))
 
             # Updatetexture being displayed
-            proc = annotate_image(np.copy(self.imgRef.numpy_image[0]), self.imgRef.colonies)
+            proc = annotate_image(np.copy(self.imgRef.numpy_image[0]), self.editedColonies)
             w, h, _ = proc.shape
             texture = Texture.create(size=(h, w))
             texture.blit_buffer(proc.flatten(), colorfmt='rgb', bufferfmt='ubyte')
             self.texture = texture
             self.replace.texture = texture
-            for container in imageContainers:
-                if (container.source == self.imgRef.source):
-                    container.texture = texture
-                    container.colonies = self.imgRef.colonies
+            # self.imgRef.texture = texture
+
+    def save_changes(self):
+        if self.edited:
+            self.imgRef.texture = self.texture
+            self.imgRef.colonies = self.editedColonies
+            self.edited = False
+
+    def undo_changes(self):
+        self.texture = self.imgRef.texture
+        self.editedColonies = self.imgRef.colonies
+        if (swap == 0):
+            self.replace.texture = self.texture
+        app = App.get_running_app()
+        app.root.infoContainer.ids.colony_count_text.text = str(len(self.editedColonies[0]))
+        self.edited = False
             
     def zoom_in(self):
         if self.scale < 10:
@@ -235,7 +249,10 @@ class PreviewerContainer(Scatter):
 
         if (swap == 0):
             self.ids.relativeContainer.clear_widgets()
-            self.replace = AsyncImage(texture = self.imgRef.texture, size = (self.parent.width, self.parent.height), fit_mode = 'contain')
+            if self.edited:
+                self.replace = AsyncImage(texture = self.texture, size = (self.parent.width, self.parent.height), fit_mode = 'contain')
+            else:
+                self.replace = AsyncImage(texture = self.imgRef.texture, size = (self.parent.width, self.parent.height), fit_mode = 'contain')
             self.ids.relativeContainer.add_widget(self.replace)
         else:
             self.ids.relativeContainer.clear_widgets()
@@ -272,10 +289,15 @@ class InfoContainer(BoxLayout):
             self.ids.tools_layout.opacity = 1
             
             app = App.get_running_app()
+            app.root.replace_with_save_and_exit()
             if app.root.ids.prevContainer.add_mode:
                 self.ids.add_icon.color = (0.1, 0.8, 0.8, 1)
+            else:
+                self.ids.add_icon.color = (1, 1, 1, 1)
             if app.root.ids.prevContainer.remove_mode:
                 self.ids.remove_icon.color = (0.1, 0.8, 0.8, 1)
+            else:
+                self.ids.remove_icon.color = (1, 1, 1, 1)
         else:
             # Show the edit button
             self.ids.edit_button.size_hint = (1, 0.2)
@@ -356,6 +378,8 @@ class MyGridLayout(Widget):
     def __init__(self, **kwargs):
         super(MyGridLayout, self).__init__(**kwargs)
         self.processing = True  # Flag to indicate if it's processing or exporting
+        self.editing = False  # Flag to indicate if the user is editing or not
+        self.tempUse = False  # Flag to switch to image when in editing mode after not saving changes
         Window.bind(on_drop_file=self.file_drop)
 
     # Open the file expolorer when the upload button is pressed
@@ -363,6 +387,11 @@ class MyGridLayout(Widget):
         try:
             if self.processing:
                 filechooser.open_file(on_selection = self.selected, multiple = True)
+            elif self.editing:
+                if self.ids.prevContainer.edited:
+                    Factory.SaveChangesPopup().open()
+                else:
+                    self.activate_exit()
             else:
                 self.activate_cancel()
         except Exception as e:
@@ -412,31 +441,48 @@ class MyGridLayout(Widget):
         global swap
 
         container = self.ids.prevContainer
-        container.reset_image()
-        container.imgRef = imgReference
+        if not container.edited:
+            container.reset_image()
+            container.imgRef = imgReference
 
-        if (imgReference.colonies is not None):
-            self.infoContainer.ids.colony_count_text.text = str(len(imgReference.colonies[0]))
-        if (container.replace == None):
-            container.ids.previewer.source = imgReference.source
-        else:
-            if(swap == 1):
-                container.replace.source = imgReference.source
+            if (imgReference.colonies is not None):
+                self.infoContainer.ids.colony_count_text.text = str(len(imgReference.colonies[0]))
+                container.editedColonies = imgReference.colonies
+            if (container.replace == None):
+                container.ids.previewer.source = imgReference.source
             else:
-                container.replace.texture = imgReference.texture
-            
-    def handle_delete(self):
+                if(swap == 1):
+                    container.replace.source = imgReference.source
+                else:
+                    container.replace.texture = imgReference.texture
+        else:
+            self.tempPrev = imgReference
+            self.tempUse = True
+            Factory.SaveChangesPopup().open()
+
+    def handle_delete(self, id):
         print(len(imageContainers))
+
+        # Remove from imageContainers
+        for i in range(len(imageContainers)):
+            print("image: ", imageContainers[i], "id: ", imageContainers[i].id)
+            if (imageContainers[i].id == id):
+                if imageContainers[i].is_selected and len(imageContainers) != 1:
+                    if i == len(imageContainers) - 1:
+                        imageContainers[-2].is_selected = True
+                    else:
+                        imageContainers[-1].is_selected = True
+                    self.previewer_update(imageContainers[-1])
+                del imageContainers[i]
+                break
+
         if len(imageContainers) == 0:
             if self.ids.prevContainer.replace == None:
                 self.ids.prevContainer.ids.previewer.opacity = 0
             else:
                 self.ids.prevContainer.replace.opacity = 0
             if not self.processing:
-                self.activate_cancel()
-        else:
-            imageContainers[-1].is_selected = True
-            self.previewer_update(imageContainers[-1])
+                self.activate_cancel()            
 
     def activate_cancel(self):
         self.ids.process_button.text = "Process"
@@ -445,6 +491,22 @@ class MyGridLayout(Widget):
         if (swap == 0):
             self.toggle_images()
         self.infoContainer.remove()
+        self.ids.prevContainer.reset_image()
+
+    def activate_exit(self):
+        self.ids.process_button.text = "Export"
+        self.ids.upload_button.text = "Cancel"
+        self.editing = False
+        self.infoContainer.toggle_tools()
+        # self.previewer_update(self.ids.prevContainer.imgRef)
+        self.ids.prevContainer.edited = False
+        self.ids.prevContainer.undo_changes()
+        if self.tempUse:
+            self.tempUse = False
+            self.tempPrev.on_selection()
+            self.previewer_update(self.tempPrev)
+        self.ids.prevContainer.add_mode = False
+        self.ids.prevContainer.remove_mode = False
         self.ids.prevContainer.reset_image()
 
     def convert_to_texture(self, image):
@@ -475,6 +537,7 @@ class MyGridLayout(Widget):
             self.infoContainer = InfoContainer()
             self.ids.right_side_layout.add_widget(self.infoContainer)
             self.infoContainer.ids.colony_count_text.text = str(len(self.ids.prevContainer.imgRef.colonies[0]))
+            self.ids.prevContainer.editedColonies = self.ids.prevContainer.imgRef.colonies
             self.toggle_images()
 
     def start_exporting(self):
@@ -485,6 +548,11 @@ class MyGridLayout(Widget):
         self.ids.upload_button.text = "Cancel"
         self.processing = False
 
+    def replace_with_save_and_exit(self):
+        self.ids.process_button.text = "Save"
+        self.ids.upload_button.text = "Exit"
+        self.editing = True
+
 
     def on_process_button_press(self):
         try:
@@ -493,6 +561,12 @@ class MyGridLayout(Widget):
                     self.start_processing()
                     self.replace_with_export_and_cancel()
                     self.ids.prevContainer.reset_image()
+            elif self.editing:
+                print("saving")
+                # self.infoContainer.toggle_tools()
+                # self.ids.prevContainer.reset_image()
+                self.ids.prevContainer.save_changes()
+                self.activate_exit()
             else:
                 self.start_exporting()
         except Exception as e:
@@ -519,9 +593,9 @@ class MyGridLayout(Widget):
             self.ids.image_scroll_view.size_hint = (0.4, 1)
             self.ids.upload_process_container.size_hint = (1,0.3)
             self.ids.upload_button.opacity = 1
-            self.ids.upload_button.text = "Cancel"
+            self.ids.upload_button.text = "Exit"
             self.ids.process_button.opacity = 1
-            self.ids.process_button.text = "Export"
+            self.ids.process_button.text = "Save"
 
             self.ids.prevContainer.reset_image()
 

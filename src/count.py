@@ -101,7 +101,8 @@ def process_images_from_paths(paths):
         pass
     print("Number of images opened: " + str(len(images)))
     # Convert the images to black and white
-    images = [cv.cvtColor(recolor_image(img), cv.COLOR_BGR2GRAY) for img in images]
+    # images = [cv.cvtColor(recolor_image(img), cv.COLOR_BGR2GRAY) for img in images]
+    images = [cv.cvtColor(img, cv.COLOR_BGR2GRAY) for img in images]
     return process_images(images)
 
 # this function processes a list of images stored as numpy arrays
