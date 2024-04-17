@@ -21,6 +21,10 @@ from kivy.graphics import Color, RoundedRectangle
 from kivy.uix.label import Label
 from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, ListProperty
 from kivy.factory import Factory
+from plyer import filechooser
+import os
+
+
 
 
 import numpy as np
@@ -540,8 +544,28 @@ class MyGridLayout(Widget):
             self.ids.prevContainer.editedColonies = self.ids.prevContainer.imgRef.colonies
             self.toggle_images()
 
+
     def start_exporting(self):
-        print("Exportinging started...")
+        # Open a directory chooser dialog
+        directory_path = filechooser.choose_dir(title="Select Export Directory")
+        if directory_path:
+            self.export_images_to_directory(directory_path[0])  # plyer returns a list of selected paths
+
+    def export_images_to_directory(self, directory_path):
+        for i, container in enumerate(imageContainers):
+            if container.texture:
+                file_path = os.path.join(directory_path, f"processed_image_{i}.png")
+                self.save_texture_to_file(container.texture, file_path)
+                print(f"Exported {file_path}")
+
+    def save_texture_to_file(self, texture, file_path):
+        if texture is not None:
+            image_data = bytes(texture.pixels)
+            image_size = (texture.width, texture.height)
+            from PIL import Image
+            image = Image.frombytes('RGBA', image_size, image_data, 'raw', 'RGBA', 0, -1)
+            image.save(file_path)
+
 
     def replace_with_export_and_cancel(self):
         self.ids.process_button.text = "Export"
