@@ -12,7 +12,7 @@
             rgba: self.border_color  # Set the color to blue for the border (only selected image)
         Line:
             rectangle: self.x+1, self.y+1, self.width-2, self.height-2
-            width: 8.0 
+            width: 8.0
 
     RelativeLayout:
         Button:
@@ -109,6 +109,7 @@
     pos: root.parent.pos
     size: previewer.size
     do_rotation: False
+    opacity: 0
     RelativeLayout:
         id: relativeContainer
         size: root.parent.width, root.parent.height
@@ -117,7 +118,6 @@
             size: root.parent.width, root.parent.height
             source: None
             fit_mode: 'contain'
-            opacity: 0
 
 # Container for colony count and edit button
 <InfoContainer>
@@ -148,6 +148,7 @@
             size_hint_y: 1
 
         Label:
+            id: detected_text
             text: "Colonies Detected:"
             font_size: 40
             halign: 'center'
@@ -344,11 +345,17 @@
 
 <MyGridLayout>
     id: my_grid_layout
+
+    Image:
+        source: 'img/background_gradient.png'
+        size_hint: (1, 1)
+        size: root.width, root.height
+        fit_mode: 'cover'
     GridLayout:
         id: main_grid
         cols: 2
+        padding: 30, 20, 30, 20
         size: root.width, root.height
-
 
         # Imported images container on the left side of the screen
         ScrollView:
@@ -382,7 +389,7 @@
                 canvas.before:
                     Color:
                         # rgba: 0.286, 0.361, 0.51, 1
-                        rgba: 0.286, 0.361, 0.51, 1
+                        rgba: 0.286, 0.361, 0.51, 0.6
                     Rectangle:
                         pos: self.pos
                         size: self.size
@@ -397,7 +404,7 @@
                 canvas.before:
                     Color:
                         # rgba: 0.286, 0.361, 0.51, 1
-                        rgba: 0.286, 0.361, 0.51, 1  # Set to the same color as cols: 2
+                        rgba: 0.286, 0.361, 0.51, 0.6  # Set to the same color as cols: 2
                     Rectangle:
                         pos: self.pos
                         size: self.size

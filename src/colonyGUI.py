@@ -384,7 +384,19 @@ class MyGridLayout(Widget):
         self.processing = True  # Flag to indicate if it's processing or exporting
         self.editing = False  # Flag to indicate if the user is editing or not
         self.tempUse = False  # Flag to switch to image when in editing mode after not saving changes
+        self.infoContainer = None # Info container
         Window.bind(on_drop_file=self.file_drop)
+        Window.bind(on_resize=self.on_window_resize)
+
+    # Adjust fonts with window resize
+    def on_window_resize(self, instance, width, height):
+        font_size = min(width/1920, height/1000)
+
+        self.ids.upload_button.font_size = int(80 * font_size)
+        self.ids.process_button.font_size = int(80 * font_size)
+        print(Window.size)
+        if self.infoContainer != None:
+            self.infoContainer.ids.detected_text.font_size = int(40 * font_size)
 
     # Open the file expolorer when the upload button is pressed
     def file_explorer_or_cancel(self):
@@ -433,9 +445,9 @@ class MyGridLayout(Widget):
             self.ids.prevContainer.ids.previewer.source = file_path
             if (self.ids.prevContainer.replace != None):
                 self.ids.prevContainer.replace.source = file_path
-                self.ids.prevContainer.replace.opacity = 1
+                self.ids.prevContainer.opacity = 1
 
-            self.ids.prevContainer.ids.previewer.opacity = 1
+            self.ids.prevContainer.opacity = 1
             print(imageContainers)
         else:
             print("Could not open")
@@ -474,17 +486,15 @@ class MyGridLayout(Widget):
                 if imageContainers[i].is_selected and len(imageContainers) != 1:
                     if i == len(imageContainers) - 1:
                         imageContainers[-2].is_selected = True
+                        self.previewer_update(imageContainers[-2])
                     else:
                         imageContainers[-1].is_selected = True
-                    self.previewer_update(imageContainers[-1])
+                        self.previewer_update(imageContainers[-1])
                 del imageContainers[i]
                 break
 
         if len(imageContainers) == 0:
-            if self.ids.prevContainer.replace == None:
-                self.ids.prevContainer.ids.previewer.opacity = 0
-            else:
-                self.ids.prevContainer.replace.opacity = 0
+            self.ids.prevContainer.opacity = 0
             if not self.processing:
                 self.activate_cancel()            
 
@@ -502,6 +512,9 @@ class MyGridLayout(Widget):
         self.ids.upload_button.text = "Cancel"
         self.editing = False
         self.infoContainer.toggle_tools()
+        if (swap == 1):
+            self.toggle_images()
+            self.infoContainer.switch_toggle()
         # self.previewer_update(self.ids.prevContainer.imgRef)
         self.ids.prevContainer.edited = False
         self.ids.prevContainer.undo_changes()
@@ -540,6 +553,8 @@ class MyGridLayout(Widget):
         if (len(imageContainers) != 0):
             self.infoContainer = InfoContainer()
             self.ids.right_side_layout.add_widget(self.infoContainer)
+            print(Window.size[0])
+            self.infoContainer.ids.detected_text.font_size = int(40 * Window.size[0]/1920)
             self.infoContainer.ids.colony_count_text.text = str(len(self.ids.prevContainer.imgRef.colonies[0]))
             self.ids.prevContainer.editedColonies = self.ids.prevContainer.imgRef.colonies
             self.toggle_images()
