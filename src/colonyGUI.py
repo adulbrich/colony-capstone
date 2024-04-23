@@ -23,6 +23,8 @@ from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, Lis
 from kivy.factory import Factory
 from plyer import filechooser
 import os
+import time
+
 
 
 
@@ -552,9 +554,10 @@ class MyGridLayout(Widget):
             self.export_images_to_directory(directory_path[0])  # plyer returns a list of selected paths
 
     def export_images_to_directory(self, directory_path):
+        timestamp = time.strftime("%Y%m%d-%H%M%S")
         for i, container in enumerate(imageContainers):
             if container.texture:
-                file_path = os.path.join(directory_path, f"processed_image_{i}.png")
+                file_path = os.path.join(directory_path, f"processed_image_{i}_{timestamp}.png")
                 self.save_texture_to_file(container.texture, file_path)
                 print(f"Exported {file_path}")
 
