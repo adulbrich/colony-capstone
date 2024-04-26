@@ -24,6 +24,8 @@ from kivy.factory import Factory
 from plyer import filechooser
 import os
 import time
+import csv
+
 
 
 
@@ -282,6 +284,7 @@ class InfoContainer(BoxLayout):
 
     def update_ui_based_on_tools_visibility(self):
         
+        # when the tools section is turned on
         if self.tools_visible:
             # Hide the edit button
             self.ids.edit_button.size_hint = (None, None)
@@ -304,10 +307,13 @@ class InfoContainer(BoxLayout):
                 self.ids.remove_icon.color = (0.1, 0.8, 0.8, 1)
             else:
                 self.ids.remove_icon.color = (1, 1, 1, 1)
+
+        # when the tools section is turned off
         else:
             # Show the edit button
-            self.ids.edit_button.size_hint = (1, 0.2)
-            self.ids.edit_button.size = (self.parent.width, 60)  # Adjust the height as needed
+            # self.ids.edit_button.size_hint = (1, 0.05) # (width, heigt)
+            self.ids.colonies_detected_section.size_hint = (1, 0.0049)
+            self.ids.edit_button.size = (375, 500)  
             self.ids.edit_button.opacity = 1
 
             # Hide the tool section
@@ -513,6 +519,7 @@ class MyGridLayout(Widget):
         self.ids.process_button.text = "Export"
         self.ids.upload_button.text = "Cancel"
         self.editing = False
+        
         self.infoContainer.toggle_tools()
         if (swap == 1):
             self.toggle_images()
@@ -527,6 +534,8 @@ class MyGridLayout(Widget):
         self.ids.prevContainer.add_mode = False
         self.ids.prevContainer.remove_mode = False
         self.ids.prevContainer.reset_image()
+
+
 
     def convert_to_texture(self, image):
         w, h, _ = image.shape
@@ -570,11 +579,30 @@ class MyGridLayout(Widget):
 
     def export_images_to_directory(self, directory_path):
         timestamp = time.strftime("%Y%m%d-%H%M%S")
+        colony_counts = []
         for i, container in enumerate(imageContainers):
             if container.texture:
                 file_path = os.path.join(directory_path, f"processed_image_{i}_{timestamp}.png")
                 self.save_texture_to_file(container.texture, file_path)
                 print(f"Exported {file_path}")
+                # Add image name and colony count to the list
+                colony_counts.append((f"processed_image_{i}_{timestamp}.png", len(container.colonies[0])))
+        
+        # Generate and save the CSV file
+        self.save_colony_data_to_csv(colony_counts, directory_path, timestamp)
+        
+    def save_colony_data_to_csv(self, colony_data, directory_path, timestamp):
+        # Define the CSV file path
+        csv_file_path = os.path.join(directory_path, f"colony_counts_{timestamp}.csv")
+        with open(csv_file_path, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            # Write the header
+            writer.writerow(['Image Name', 'Colony Count'])
+            # Write the data
+            for image_name, count in colony_data:
+                writer.writerow([image_name, count])
+        print(f"CSV file saved at {csv_file_path}")
+     
 
     def save_texture_to_file(self, texture, file_path):
         if texture is not None:

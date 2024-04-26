@@ -316,7 +316,6 @@
                 Widget:
                     size_hint_y: 0.1
 
-
             BoxLayout:
                 orientation: 'vertical'
 
@@ -339,9 +338,6 @@
     Widget:
         id: spacer_under_infocontainer
         size_hint_y: 0.01
-
-
-
 
 <MyGridLayout>
     id: my_grid_layout
@@ -418,7 +414,7 @@
                         font_size: 80
                         size_hint: (1, 0.5)
                         on_release: root.file_explorer_or_cancel()
-                        background_color: (0.5, 0.5, 0.5, 0)  # Makes the default button background transparent
+                        background_color: (0.5, 0.5, 0.5, 0) 
                         canvas.before:
                             Color:
                                 rgba: (0.3, 0.3, 0.3, 1)  # Button color
@@ -426,8 +422,6 @@
                                 size: self.size
                                 pos: self.pos
                                 radius: [30]
-
-
 
                 AnchorLayout:
                     padding: 40, 0, 180, 0
