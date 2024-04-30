@@ -67,7 +67,7 @@
             valign: 'middle'
             halign: 'center'
             text: "Select 'Yes' to continue exiting without saving, or select 'No' to return to the Editor."
-        
+
         GridLayout:
             cols:2
             AnchorLayout:
@@ -100,7 +100,7 @@
                             size: self.size
                             pos: self.pos
                             radius: [30]
-            
+
 
 # Contains the previewer window with a zoomable image
 <PreviewerContainer>
@@ -414,7 +414,7 @@
                         font_size: 80
                         size_hint: (1, 0.5)
                         on_release: root.file_explorer_or_cancel()
-                        background_color: (0.5, 0.5, 0.5, 0) 
+                        background_color: (0.5, 0.5, 0.5, 0)
                         canvas.before:
                             Color:
                                 rgba: (0.3, 0.3, 0.3, 1)  # Button color
