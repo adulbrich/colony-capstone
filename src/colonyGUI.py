@@ -597,25 +597,53 @@ class MyGridLayout(Widget):
             self.toggle_images()
 
 
-    def start_exporting(self):
-        # Open a directory chooser dialog
+    def export_photos(self):
+        print("Export Photo button was clicked.")
         directory_path = filechooser.choose_dir(title="Select Export Directory")
         if directory_path:
-            self.export_images_to_directory(directory_path[0])  # plyer returns a list of selected paths
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            for i, container in enumerate(imageContainers):
+                if container.texture:  # Check if the image is processed
+                    file_path = os.path.join(directory_path[0], f"processed_image_{i}_{timestamp}.png")
+                    self.save_texture_to_file(container.texture, file_path)
+                    print(f"Exported {file_path}")
 
-    def export_images_to_directory(self, directory_path):
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        colony_counts = []
-        for i, container in enumerate(imageContainers):
-            if container.texture:
-                file_path = os.path.join(directory_path, f"processed_image_{i}_{timestamp}.png")
-                self.save_texture_to_file(container.texture, file_path)
-                print(f"Exported {file_path}")
-                # Add image name and colony count to the list
-                colony_counts.append((f"processed_image_{i}_{timestamp}.png", len(container.colonies[0])))
+    def export_csv(self):
+        print("Export CSV button was clicked.")
+        directory_path = filechooser.choose_dir(title="Select Export Directory")
+        if directory_path:
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            colony_counts = []
+            for i, container in enumerate(imageContainers):
+                if container.texture:  # Ensure the image is processed
+                    image_name = f"processed_image_{i}_{timestamp}.png"
+                    # Collect image name and colony count
+                    colony_counts.append((image_name, len(container.colonies[0])))
+            # Generate and save the CSV file
+            self.save_colony_data_to_csv(colony_counts, directory_path[0], timestamp)
+
+
+
+
+    # def start_exporting(self):
+    #     # Open a directory chooser dialog
+    #     directory_path = filechooser.choose_dir(title="Select Export Directory")
+    #     if directory_path:
+    #         self.export_images_to_directory(directory_path[0])  # plyer returns a list of selected paths
+
+    # def export_images_to_directory(self, directory_path):
+    #     timestamp = time.strftime("%Y%m%d-%H%M%S")
+    #     colony_counts = []
+    #     for i, container in enumerate(imageContainers):
+    #         if container.texture:
+    #             file_path = os.path.join(directory_path, f"processed_image_{i}_{timestamp}.png")
+    #             self.save_texture_to_file(container.texture, file_path)
+    #             print(f"Exported {file_path}")
+    #             # Add image name and colony count to the list
+    #             colony_counts.append((f"processed_image_{i}_{timestamp}.png", len(container.colonies[0])))
         
-        # Generate and save the CSV file
-        self.save_colony_data_to_csv(colony_counts, directory_path, timestamp)
+    #     # Generate and save the CSV file
+    #     self.save_colony_data_to_csv(colony_counts, directory_path, timestamp)
         
     def save_colony_data_to_csv(self, colony_data, directory_path, timestamp):
         # Define the CSV file path
@@ -649,24 +677,34 @@ class MyGridLayout(Widget):
         self.ids.upload_button.text = "Exit"
         self.editing = True
 
-
+    # Process/Export/Save buttons
     def on_process_button_press(self):
         try:
+            # Current button: Process button
             if self.processing:
                 if len(imageContainers) != 0:
                     self.start_processing()
                     self.replace_with_export_and_cancel()
                     self.ids.prevContainer.reset_image()
+            # Current button: Save button
             elif self.editing:
                 print("saving")
                 # self.infoContainer.toggle_tools()
                 # self.ids.prevContainer.reset_image()
                 self.ids.prevContainer.save_changes()
                 self.activate_exit()
+            # Current button: Export button
             else:
-                self.start_exporting()
+                Factory.ExportOptionsPopup().open()
         except Exception as e:
             print(f"Error: {e}")
+    
+    # def export_photo(self):
+    #     print("Export photo button was clicked.")
+
+    # def export_csv(self):
+    #     print("Export CSV button was clicked.")
+
 
     def toggle_fullscreen(self):
         self.fullscreen_mode = not self.fullscreen_mode
@@ -694,6 +732,7 @@ class MyGridLayout(Widget):
             self.ids.process_button.text = "Save"
 
             self.ids.prevContainer.reset_image()
+        
 
 
     

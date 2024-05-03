@@ -439,3 +439,37 @@
                                 size: self.size
                                 pos: self.pos
                                 radius: [30]
+
+
+<ExportOptionsPopup@Popup>
+    title: 'Export Options'
+    size_hint: 0.6, 0.4
+    auto_dismiss: True
+    BoxLayout:
+        orientation: 'vertical'
+        padding: [0, 0, 0, 0]  # Top, Right, Bottom, Left padding set to zero
+        spacing: 0  # No extra spacing between children
+
+        Button:
+            text: 'Export Photo'
+            size_hint_y: 0.4
+            on_release:
+                root.dismiss()
+                app.root.export_photos()
+        
+        Button:
+            text: 'Export CSV'
+            size_hint_y: 0.4
+            on_release:
+                root.dismiss()
+                app.root.export_csv()
+        
+        AnchorLayout:
+            anchor_x: 'right'
+            size_hint_y: None
+            height: 50  # Set a fixed height for the exit button
+            Button:
+                size_hint: 0.2, 1
+                text: "Cancel"
+                on_release:
+                    root.dismiss()
