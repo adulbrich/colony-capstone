@@ -1,4 +1,6 @@
 import kivy
+from kivy.config import Config
+Config.set('input', 'mouse', 'mouse,disable_multitouch')
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.core.window import Window
@@ -22,9 +24,9 @@ from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, Lis
 from kivy.factory import Factory
 
 from plyer import filechooser
-from count import process_images_from_paths, annotate_image
+from count import process_images_from_paths, annotate_image, open_heic
 
-from plyer import filechooser
+from pillow_heif import register_heif_opener
 import os
 import time
 import csv
@@ -461,7 +463,9 @@ class MyGridLayout(Widget):
 
     # Add provided image to our image_box section add put in the image previewer
     def load_image(self, file_path):
-        if file_path.lower().endswith(('.png', '.jpg', '.jpeg')):
+        if file_path.lower().endswith(('.png', '.jpg', '.jpeg', 'heic')):
+            if file_path.lower().endswith('heic'):
+                register_heif_opener()
             imageContainer = ImageContainerWidget(source = file_path, texture = None, numpy_image = None, colonies = None)
             imageContainers.append(imageContainer)
             self.ids.image_box.add_widget(imageContainer)

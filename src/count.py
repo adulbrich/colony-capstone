@@ -95,7 +95,9 @@ def process_images_from_paths(paths):
             images.append(image)
         elif (path.lower().endswith(('.heic'))):
             # print("reading as heic")
-            images.append(cv.cvtColor(np.array(Image.open(path).convert('RGB')), cv.COLOR_RGB2BGR))
+            image = cv.cvtColor(np.array(Image.open(path).convert('RGB')), cv.COLOR_RGB2BGR)
+            image = cv.flip(image, 0)
+            images.append(image)
         else:
             print("Could not find file: ", path)
         pass
