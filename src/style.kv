@@ -124,8 +124,7 @@
     id: info_container
     size_hint: (0.4, 1)
     orientation: 'vertical'
-    padding: 0, 0, 20, 0
-
+    
     # Spacer widget for space at the top
     Widget:
         size_hint_y: None
@@ -134,7 +133,6 @@
     BoxLayout:
         id: colonies_detected_section
         size_hint_y: 0.3
-        # height: 250  # Fixed height to maintain size
         orientation: 'vertical'
         canvas.before:
             Color:
@@ -181,7 +179,6 @@
         # opacity: 0 if root.tools_visible else 1  # Hide when tools are visible
         DefaultButton:
             size_hint: (1, 0.3)
-            # height: 200
             text: "Edit"
             font_size: 60
             on_release: root.toggle_tools()
@@ -451,7 +448,7 @@
         spacing: 0  # No extra spacing between children
 
         Button:
-            text: 'Export Photo'
+            text: 'Export Photos'
             size_hint_y: 0.4
             on_release:
                 root.dismiss()

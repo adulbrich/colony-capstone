@@ -34,6 +34,7 @@ import csv
 import numpy as np
 import cv2 as cv
 
+Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 # Set app size
 Window.size = (1000, 700)
@@ -319,7 +320,7 @@ class InfoContainer(BoxLayout):
             self.ids.edit_button.size = (0, 0)
             self.ids.edit_button.opacity = 0
 
-            self.ids.colonies_detected_section.size_hint = (1, 0.038)
+            self.ids.colonies_detected_section.size_hint = (1, 0.04)
 
             # Show the tool section
             self.ids.tools_layout.size_hint = (1, 0.2)
@@ -340,8 +341,8 @@ class InfoContainer(BoxLayout):
         else:
             # Show the edit button
             # self.ids.edit_button.size_hint = (1, 0.05) # (width, heigt)
-            self.ids.colonies_detected_section.size_hint = (1, 0.0049)
-            self.ids.edit_button.size = (375, 500)  
+            self.ids.colonies_detected_section.size_hint = (1, 0.0048)
+            self.ids.edit_button.size_hint = (1, 0.015)  
             self.ids.edit_button.opacity = 1
 
             # Hide the tool section
@@ -437,13 +438,16 @@ class MyGridLayout(Widget):
     # Open the file expolorer when the upload button is pressed
     def file_explorer_or_cancel(self):
         try:
+            # current buttton: Upload
             if self.processing:
                 filechooser.open_file(on_selection = self.selected, multiple = True)
+            # current button: Exit
             elif self.editing:
                 if self.ids.prevContainer.edited:
                     Factory.SaveChangesPopup().open()
                 else:
                     self.activate_exit()
+            # current button:Cancel
             else:
                 self.activate_cancel()
         except Exception as e:
@@ -779,11 +783,13 @@ class ImageButton(ButtonBehavior, Image):
                 self.on_cursor_leave()
 
     def on_cursor_enter(self):
-        # print("cursor on")
+        print("cursor on: image")
+        self.color.rgb = (0.7, 0.7, 0.7,1)  
         Window.set_system_cursor('hand')
 
     def on_cursor_leave(self):
-        # print("cursor off")
+        print("cursor off:image")
+        self.color = (1, 1, 1,1)
         Window.set_system_cursor('arrow')
 
     def on_press(self):
