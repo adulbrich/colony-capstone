@@ -1,0 +1,47 @@
+body{
+    background-image: linear-gradient(#0C1248, #293C33);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: white;
+    text-align: center;
+    padding: 0 100px;
+}
+
+div{
+    padding: 20px;
+}
+
+#navigationMenu{
+    text-align: center;
+    padding: 15px;
+    border-bottom: 2px solid white;
+    margin: 0px 100px;
+}
+
+img{
+    max-width: 90%;
+}
+
+a {
+    font-size: large;
+    text-decoration: none;
+    color: inherit;
+    padding: 15px;
+}
+
+h1{
+    font-size: 80px;
+}
+
+ul{
+    text-align: left;
+}
+
+li{
+    margin-bottom: 10px;
+}
+
+h2{
+    font-size: 45px;
+}
+
