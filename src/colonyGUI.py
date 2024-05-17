@@ -34,6 +34,20 @@ import csv
 import numpy as np
 import cv2 as cv
 
+
+
+from plyer import filechooser
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.image import Image
+from count import process_images_from_paths, annotate_image
+from kivy.clock import Clock
+from kivy.uix.button import Button
+from kivy.graphics import Color, RoundedRectangle
+import platform
+
+
+
+
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
 
 # Set app size
@@ -127,33 +141,34 @@ class PreviewerContainer(Scatter):
     edited = False
     add_mode = False
     remove_mode = False
-    hovered = False
+    if platform.system() == 'Windows':
+        hovered = False
 
-    def __init__(self, **kwargs):
-        super(PreviewerContainer, self).__init__(**kwargs)
-        Window.bind(mouse_pos=self.on_mouse_pos)  # Bind to mouse position changes
+        def __init__(self, **kwargs):
+            super(PreviewerContainer, self).__init__(**kwargs)
+            Window.bind(mouse_pos=self.on_mouse_pos)  # Bind to mouse position changes
 
-    # Change cursor depending on the current mode
-    def on_mouse_pos(self, *args):
-        pos_old = args[1]  # args[1] is the mouse position
+        # Change cursor depending on the current mode
+        def on_mouse_pos(self, *args):
+            pos_old = args[1]  # args[1] is the mouse position
 
-        # Adjust pos depending on users screen scale/density
-        pos = (pos_old[0] * Metrics.density, pos_old[1] * Metrics.density)
+            # Adjust pos depending on users screen scale/density
+            pos = (pos_old[0] * Metrics.density, pos_old[1] * Metrics.density)
 
-        inside = self.parent.collide_point(*pos)  # Check if mouse is inside the widget
-        if inside:
-            if not self.hovered:  # Check if hover state needs to be updated
-                self.hovered = True
-            if self.add_mode == True:
-                Window.set_system_cursor('crosshair')
-            elif self.remove_mode == True:
-                Window.set_system_cursor('no')
+            inside = self.parent.collide_point(*pos)  # Check if mouse is inside the widget
+            if inside:
+                if not self.hovered:  # Check if hover state needs to be updated
+                    self.hovered = True
+                if self.add_mode == True:
+                    Window.set_system_cursor('crosshair')
+                elif self.remove_mode == True:
+                    Window.set_system_cursor('no')
+                else:
+                    Window.set_system_cursor('arrow')
             else:
-                Window.set_system_cursor('arrow')
-        else:
-            if self.hovered:
-                self.hovered = False
-                Window.set_system_cursor('arrow')
+                if self.hovered:
+                    self.hovered = False
+                    Window.set_system_cursor('arrow')
 
     
     # Implements zoom functionality for previewer image
@@ -767,10 +782,12 @@ class ImageButton(ButtonBehavior, Image):
 
     # this function called whenever the mouse position changes
     def on_mouse_pos(self, *args):
-        pos_old = args[1]  # args[1] is the mouse position
+        # Mac
+        pos = args[1]  # args[1] is the mouse position
 
-        # Adjust pos depending on users screen scale/density
-        pos = (pos_old[0] * Metrics.density, pos_old[1] * Metrics.density)
+        # Adjust pos depending on user's screen scale/density if on Windows
+        if platform.system() == 'Windows':
+            pos = (pos[0] * Metrics.density, pos[1] * Metrics.density)
 
         inside = self.collide_point(*self.to_widget(*pos))  # Check if mouse is inside the widget
         if inside:
@@ -830,10 +847,11 @@ class DefaultButton(ButtonBehavior, Label):
         self.rect.size = self.size
 
     def on_mouse_pos(self, *args):
-        pos_old = args[1]  # args[1] is the mouse position
+        pos = args[1]  # args[1] is the mouse position
 
-        # Adjust pos depending on users screen scale/density
-        pos = (pos_old[0] * Metrics.density, pos_old[1] * Metrics.density)
+        # Adjust pos depending on user's screen scale/density if on Windows
+        if platform.system() == 'Windows':
+            pos = (pos[0] * Metrics.density, pos[1] * Metrics.density)
         
         inside = self.collide_point(*self.to_widget(*pos))  # Check if mouse is inside the widget
         if inside:
