@@ -19,7 +19,7 @@ div{
 }
 
 img{
-    max-width: 90%;
+    max-width: 70%;
 }
 
 a {
@@ -34,6 +34,7 @@ h1{
 }
 
 ul{
+    display: inline-block;
     text-align: left;
 }
 
@@ -44,4 +45,3 @@ li{
 h2{
     font-size: 45px;
 }
-
