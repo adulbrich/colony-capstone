@@ -207,7 +207,7 @@ class PreviewerContainer(Scatter):
 
             if self.add_mode:
                 self.add_colony(pos)
-            elif len(self.imgRef.colonies[0]) != 0:
+            elif len(self.editedColonies[0]) != 0:
                 self.remove_colony(pos)
             print("Position relative to image (x,y): ", pos)
 
@@ -801,12 +801,12 @@ class ImageButton(ButtonBehavior, Image):
 
     def on_cursor_enter(self):
         print("cursor on: image")
-        self.color.rgb = (0.7, 0.7, 0.7,1)  
+        # self.color.rgb = (0.7, 0.7, 0.7,1)  
         Window.set_system_cursor('hand')
 
     def on_cursor_leave(self):
         print("cursor off:image")
-        self.color = (1, 1, 1,1)
+        # self.color = (1, 1, 1,1)
         Window.set_system_cursor('arrow')
 
     def on_press(self):
