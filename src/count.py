@@ -119,7 +119,8 @@ def process_images(images, detection_data = DetectionData(cv.HOUGH_GRADIENT_ALT,
         
     # black out image background
     for i in range(len(images)):
-        images[i] = blackout_image(images[i], dishes[i][0][0])
+        if (dishes[i] is not None):
+            images[i] = blackout_image(images[i], dishes[i][0][0])
 
     # Count the colonies
     for i in range(len(images)):
