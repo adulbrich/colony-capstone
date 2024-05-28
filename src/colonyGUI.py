@@ -23,27 +23,15 @@ from kivy.clock import Clock
 from kivy.metrics import Metrics
 from kivy.properties import StringProperty, ObjectProperty, BooleanProperty, ListProperty
 from kivy.factory import Factory
-
 from plyer import filechooser
 from count import process_images_from_paths, annotate_image, open_heic
-
 from pillow_heif import register_heif_opener
 import os
 import time
 import csv
-
 import numpy as np
 import cv2 as cv
-
-
-
-from plyer import filechooser
-from kivy.uix.behaviors import ButtonBehavior
-from kivy.uix.image import Image
 from count import process_images_from_paths, annotate_image
-from kivy.clock import Clock
-from kivy.uix.button import Button
-from kivy.graphics import Color, RoundedRectangle
 import platform
 
 
@@ -72,6 +60,7 @@ class ImageContainerWidget(BoxLayout):
     border_color = ListProperty([0, 0, 0, 0])
     process_count = 1
     processed_times = None
+    name = StringProperty('')
 
     def __init__(self, **kwargs):
         super(ImageContainerWidget, self).__init__(**kwargs)
@@ -79,6 +68,20 @@ class ImageContainerWidget(BoxLayout):
         global counter
         counter += 1
         self.id = counter
+        self.name = '' #for naming the image
+        self.is_selected = False
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            self.select_image()
+            return True
+        return super(ImageContainerWidget, self).on_touch_down(touch)
+
+    def select_image(self):
+        for container in imageContainers:
+            container.is_selected = False
+        self.is_selected = True
+        self.my_grid_layout.previewer_update(self)
         
     def on_selection(self):
         app = App.get_running_app()
@@ -326,7 +329,15 @@ class InfoContainer(BoxLayout):
             self.ids.edit_button.size = (0, 0)
             self.ids.edit_button.opacity = 0
 
-            self.ids.colonies_detected_section.size_hint = (1, 0.04)
+            self.ids.name_input_layout.size_hint = (None, None)
+            self.ids.name_input_layout.size = (0, 0)
+            self.ids.name_input_layout.opacity = 0
+
+            self.ids.save_name_button.size_hint = (None, None)
+            self.ids.save_name_button.size = (0, 0)
+            self.ids.save_name_button.opacity = 0
+
+            self.ids.colonies_detected_section.size_hint = (1, 0.033)
 
             # Show the tool section
             self.ids.tools_layout.size_hint = (1, 0.2)
@@ -347,9 +358,16 @@ class InfoContainer(BoxLayout):
         else:
             # Show the edit button
             # self.ids.edit_button.size_hint = (1, 0.05) # (width, heigt)
-            self.ids.colonies_detected_section.size_hint = (1, 0.0048)
-            self.ids.edit_button.size_hint = (1, 0.015)  
+            self.ids.colonies_detected_section.size_hint = (1, 0.0032)
+
+            self.ids.edit_button.size_hint = (1, 0.004)  
             self.ids.edit_button.opacity = 1
+
+            self.ids.name_input_layout.size_hint = (1, 0.002)  
+            self.ids.name_input_layout.opacity = 1
+
+            self.ids.save_name_button.size_hint = (1, 0.003)  
+            self.ids.save_name_button.opacity = 1
 
             # Hide the tool section
             self.ids.tools_layout.size_hint = (None, None)
@@ -357,8 +375,14 @@ class InfoContainer(BoxLayout):
             self.ids.tools_layout.opacity = 0
 
 
-    def edit(self):
-        print("Edit mode")
+    def save_name(self):
+        name_input = self.ids.name_input  # Retrieve the TextInput widget by id
+        name = name_input.text.strip()  # Get the text from the TextInput widget 
+        # Check if there is a selected image container
+        selected_container = next((c for c in imageContainers if c.is_selected), None)
+        if selected_container:
+            selected_container.name = name
+            print(f"Saved Name: {name} for image: {selected_container.source}")
     
     def add_colony(self):
         print("Add Colony was pressed")
@@ -516,24 +540,28 @@ class MyGridLayout(Widget):
             container.reset_image()
             container.imgRef = imgReference
 
-            if (imgReference.colonies is not None):
+            if imgReference.colonies is not None:
                 self.infoContainer.ids.colony_count_text.text = str(len(imgReference.colonies[0]))
                 container.editedColonies = imgReference.colonies
-            if (container.replace == None):
+            if container.replace is None:
                 container.ids.previewer.source = imgReference.source
             else:
-                if(swap == 1):
+                if swap == 1:
                     container.replace.source = imgReference.source
                 else:
                     container.replace.texture = imgReference.texture
             self.ids.process_times.text = str(container.imgRef.process_count)
+
+            # Update the name input field with the name of the selected image
+            self.infoContainer.ids.name_input.text = imgReference.name
         else:
             self.tempPrev = imgReference
             self.tempUse = True
             Factory.SaveChangesPopup().open()
 
-    def handle_delete(self, id):
-        print(len(imageContainers))
+
+        def handle_delete(self, id):
+            print(len(imageContainers))
 
         # Remove from imageContainers
         for i in range(len(imageContainers)):
@@ -638,11 +666,19 @@ class MyGridLayout(Widget):
         directory_path = filechooser.choose_dir(title="Select Export Directory")
         if directory_path:
             timestamp = time.strftime("%Y%m%d-%H%M%S")
+
             for i, container in enumerate(imageContainers):
                 if container.texture:  # Check if the image is processed
-                    file_path = os.path.join(directory_path[0], f"processed_image_{i}_{timestamp}.png")
+                    if container.name:  # Use the custom name if provided
+                        file_name = f"{container.name}_{timestamp}.png"
+                    else:  # Fallback to default naming convention
+                        file_name = f"processed_image_{i}_{timestamp}.png"
+
+                    file_path = os.path.join(directory_path[0], file_name)
                     self.save_texture_to_file(container.texture, file_path)
                     print(f"Exported {file_path}")
+
+
 
     def export_csv(self):
         print("Export CSV button was clicked.")
@@ -652,9 +688,10 @@ class MyGridLayout(Widget):
             colony_counts = []
             for i, container in enumerate(imageContainers):
                 if container.texture:  # Ensure the image is processed
-                    image_name = f"processed_image_{i}_{timestamp}.png"
-                    # Collect image name and colony count
-                    colony_counts.append((image_name, len(container.colonies[0])))
+                    default_image_name = f"processed_image_{i}_{timestamp}.png"
+                    unique_image_name = container.name if container.name else "N/A"
+                    # Collect image names and colony count
+                    colony_counts.append((default_image_name, unique_image_name, len(container.colonies[0])))
             # Generate and save the CSV file
             self.save_colony_data_to_csv(colony_counts, directory_path[0], timestamp)
         
@@ -664,10 +701,10 @@ class MyGridLayout(Widget):
         with open(csv_file_path, mode='w', newline='') as file:
             writer = csv.writer(file)
             # Write the header
-            writer.writerow(['Image Name', 'Colony Count'])
+            writer.writerow(['Default Image Name', 'Unique Image Name', 'Colony Count'])
             # Write the data
-            for image_name, count in colony_data:
-                writer.writerow([image_name, count])
+            for default_image_name, unique_image_name, count in colony_data:
+                writer.writerow([default_image_name, unique_image_name, count])
         print(f"CSV file saved at {csv_file_path}")
      
 

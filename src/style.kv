@@ -133,7 +133,7 @@
 
     BoxLayout:
         id: colonies_detected_section
-        size_hint_y: 0.3
+        size_hint_y: 0.2
         orientation: 'vertical'
         canvas.before:
             Color:
@@ -144,7 +144,7 @@
                 radius: [30]
 
         Widget:
-            size_hint_y: 1
+            size_hint_y: 0.3
 
         Label:
             id: detected_text
@@ -165,7 +165,7 @@
             height: self.texture_size[1]
 
         Widget:
-            size_hint_y: 1
+            size_hint_y: 0.3
 
 
     # Spacer widget
@@ -174,12 +174,14 @@
         height: 50
 
     AnchorLayout:
-        anchor_x: 'center'
+        # anchor_x: 'center'
         anchor_y: 'top'
         id: edit_button
+        size_hint: (1, 0.25)
+        padding: [0,0,0,50] # padding bottom
         # opacity: 0 if root.tools_visible else 1  # Hide when tools are visible
         DefaultButton:
-            size_hint: (1, 0.3)
+            size_hint: (1, 1)
             text: "Edit"
             font_size: 60
             on_release: root.toggle_tools()
@@ -191,6 +193,34 @@
                     size: self.size
                     pos: self.pos
                     radius: [30]
+
+    AnchorLayout:
+        id: name_input_layout
+        size_hint: (1, 0.1)
+        TextInput:
+            id: name_input
+            hint_text: 'Enter Image Name'
+            font_size: '20sp'
+            
+    AnchorLayout:
+        id: save_name_button
+        anchor_y: 'top'
+        size_hint: (1, 0.20)
+        DefaultButton:
+            size_hint: (1, 1)
+            text: "Save Name"
+            font_size: 60
+            on_release: root.save_name()
+            background_color: (0.5, 0.5, 0.5, 0)  # Makes the default button background transparent
+            canvas.before:
+                Color:
+                    rgba: (0.3, 0.3, 0.3, 1)  # Button color
+                RoundedRectangle:
+                    size: self.size
+                    pos: self.pos
+                    radius: [0,0,30,30]
+
+    
 
     BoxLayout:
         orientation: 'vertical'
