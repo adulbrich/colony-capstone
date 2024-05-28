@@ -12,6 +12,7 @@ from kivy.uix.image import Image
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.button import Button
 from kivy.uix.label import Label
+from kivy.uix.textinput import TextInput
 from kivy.properties import StringProperty
 from kivy.properties import ObjectProperty
 from kivy.properties import BooleanProperty
@@ -49,6 +50,7 @@ import platform
 
 
 Config.set('input', 'mouse', 'mouse,multitouch_on_demand')
+Config.set('kivy', 'exit_on_escape', '0')
 
 # Set app size
 Window.size = (1000, 700)
@@ -63,11 +65,13 @@ counter = 0
 
 class ImageContainerWidget(BoxLayout):
     source = StringProperty(None)
-    texture = ObjectProperty()
+    texture = ObjectProperty(None, allownone=True)
     numpy_image = ObjectProperty(comparator=np.array_equal)
     colonies = ObjectProperty(comparator=np.array_equal)
     is_selected = BooleanProperty(False)
     border_color = ListProperty([0, 0, 0, 0])
+    process_count = 1
+    processed_times = None
 
     def __init__(self, **kwargs):
         super(ImageContainerWidget, self).__init__(**kwargs)
@@ -75,19 +79,6 @@ class ImageContainerWidget(BoxLayout):
         global counter
         counter += 1
         self.id = counter
-
-
-    # def on_touch_down(self, touch):
-    #     if self.collide_point(*touch.pos):
-    #         self.is_selected = not self.is_selected
-    #         if self.is_selected:
-    #             self.deselect_others()
-    #         # Assuming 'my_grid_layout' is a reference to your MyGridLayout instance
-    #         self.my_grid_layout.previewer_update(self.source, self.texture)
-    #         return True
-    #     else:
-    #         # Let the event propagate to other widgets
-    #         return super(ImageContainerWidget, self).on_touch_down(touch)
         
     def on_selection(self):
         app = App.get_running_app()
@@ -440,12 +431,18 @@ class MyGridLayout(Widget):
         Window.bind(on_drop_file=self.file_drop)
         Window.bind(on_resize=self.on_window_resize)
 
+    def initialize_window_size(self):
+        print("int", Window.width, Window.height)
+        return int(75 * min(1000/1920, 700/1000))
+
     # Adjust fonts with window resize
     def on_window_resize(self, instance, width, height):
         font_size = min(width/1920, height/1000)
 
-        self.ids.upload_button.font_size = int(80 * font_size)
-        self.ids.process_button.font_size = int(80 * font_size)
+        self.ids.upload_button.font_size = int(75 * font_size)
+        self.ids.process_button.font_size = int(75 * font_size)
+        self.ids.reprocess_button.font_size = int(60 * font_size)
+        print(width, height)
         print(Window.size)
         if self.infoContainer != None:
             self.infoContainer.ids.detected_text.font_size = int(40 * font_size)
@@ -505,6 +502,7 @@ class MyGridLayout(Widget):
                 self.ids.prevContainer.opacity = 1
 
             self.ids.prevContainer.opacity = 1
+            self.ids.process_times_input_layout.opacity = 1
             print(imageContainers)
         else:
             print("Could not open")
@@ -513,7 +511,7 @@ class MyGridLayout(Widget):
     def previewer_update(self, imgReference):
         global swap
 
-        container = self.ids.prevContainer
+        container = self.ids.prevContainer 
         if not container.edited:
             container.reset_image()
             container.imgRef = imgReference
@@ -528,6 +526,7 @@ class MyGridLayout(Widget):
                     container.replace.source = imgReference.source
                 else:
                     container.replace.texture = imgReference.texture
+            self.ids.process_times.text = str(container.imgRef.process_count)
         else:
             self.tempPrev = imgReference
             self.tempUse = True
@@ -552,6 +551,8 @@ class MyGridLayout(Widget):
 
         if len(imageContainers) == 0:
             self.ids.prevContainer.opacity = 0
+            self.ids.process_times_input_layout.opacity = 0
+            self.ids.process_times.text = "1"
             if not self.processing:
                 self.activate_cancel()            
 
@@ -562,11 +563,13 @@ class MyGridLayout(Widget):
         if (swap == 0):
             self.toggle_images()
         self.infoContainer.remove()
+        self.remove_reprocess_button()
         self.ids.prevContainer.reset_image()
 
     def activate_exit(self):
         self.ids.process_button.text = "Export"
         self.ids.upload_button.text = "Cancel"
+        self.add_reprocess_button()
         self.editing = False
         
         self.infoContainer.toggle_tools()
@@ -593,11 +596,22 @@ class MyGridLayout(Widget):
 
         return texture
     
+    def reprocess_image(self):
+        if self.ids.prevContainer.imgRef.processed_times != self.ids.prevContainer.imgRef.process_count:
+            print("reprocessed")
+            self.ids.prevContainer.imgRef.texture = None
+            self.activate_cancel()
+            self.on_process_button_press()
+        else:
+            print("not reprocessed")
+    
     def start_processing(self):
         print("Processing started...")
 
         for container in imageContainers:
             if(container.texture == None):
+                print("proc count: ", container.process_count)
+                container.processed_times = container.process_count
                 colonies, numpyImage = process_images_from_paths([container.source])
                 if colonies[0] is not None:
                     container.texture = self.convert_to_texture(annotate_image(np.copy(numpyImage[0]), colonies[0]))
@@ -613,7 +627,6 @@ class MyGridLayout(Widget):
         if (len(imageContainers) != 0):
             self.infoContainer = InfoContainer()
             self.ids.right_side_layout.add_widget(self.infoContainer)
-            print(Window.size[0])
             self.infoContainer.ids.detected_text.font_size = int(40 * Window.size[0]/1920)
             self.infoContainer.ids.colony_count_text.text = str(len(self.ids.prevContainer.imgRef.colonies[0]))
             self.ids.prevContainer.editedColonies = self.ids.prevContainer.imgRef.colonies
@@ -644,29 +657,6 @@ class MyGridLayout(Widget):
                     colony_counts.append((image_name, len(container.colonies[0])))
             # Generate and save the CSV file
             self.save_colony_data_to_csv(colony_counts, directory_path[0], timestamp)
-
-
-
-
-    # def start_exporting(self):
-    #     # Open a directory chooser dialog
-    #     directory_path = filechooser.choose_dir(title="Select Export Directory")
-    #     if directory_path:
-    #         self.export_images_to_directory(directory_path[0])  # plyer returns a list of selected paths
-
-    # def export_images_to_directory(self, directory_path):
-    #     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    #     colony_counts = []
-    #     for i, container in enumerate(imageContainers):
-    #         if container.texture:
-    #             file_path = os.path.join(directory_path, f"processed_image_{i}_{timestamp}.png")
-    #             self.save_texture_to_file(container.texture, file_path)
-    #             print(f"Exported {file_path}")
-    #             # Add image name and colony count to the list
-    #             colony_counts.append((f"processed_image_{i}_{timestamp}.png", len(container.colonies[0])))
-        
-    #     # Generate and save the CSV file
-    #     self.save_colony_data_to_csv(colony_counts, directory_path, timestamp)
         
     def save_colony_data_to_csv(self, colony_data, directory_path, timestamp):
         # Define the CSV file path
@@ -693,12 +683,28 @@ class MyGridLayout(Widget):
     def replace_with_export_and_cancel(self):
         self.ids.process_button.text = "Export"
         self.ids.upload_button.text = "Cancel"
+        self.add_reprocess_button()
         self.processing = False
 
     def replace_with_save_and_exit(self):
         self.ids.process_button.text = "Save"
         self.ids.upload_button.text = "Exit"
+        self.remove_reprocess_button()
         self.editing = True
+
+    def add_reprocess_button(self):
+        self.ids.reprocess_button.parent.opacity = 1
+        self.ids.reprocess_button.parent.size_hint = (1, 1)
+        self.ids.upload_button.parent.padding = (20, 0, 10, 0)
+        self.ids.process_button.parent.padding = (10, 0, 20, 0)
+        self.ids.upload_process_container.padding = (0, 0, 180, 0)
+
+    def remove_reprocess_button(self):
+        self.ids.reprocess_button.parent.opacity = 0
+        self.ids.reprocess_button.parent.size_hint = (0, 0)
+        self.ids.upload_button.parent.padding = (180, 0, 40, 0)
+        self.ids.process_button.parent.padding = (40, 0, 180, 0)
+        self.ids.upload_process_container.padding = (0, 0, 0, 0)
 
     # Process/Export/Save buttons
     def on_process_button_press(self):
@@ -721,13 +727,6 @@ class MyGridLayout(Widget):
                 Factory.ExportOptionsPopup().open()
         except Exception as e:
             print(f"Error: {e}")
-    
-    # def export_photo(self):
-    #     print("Export photo button was clicked.")
-
-    # def export_csv(self):
-    #     print("Export CSV button was clicked.")
-
 
     def toggle_fullscreen(self):
         self.fullscreen_mode = not self.fullscreen_mode
@@ -743,6 +742,7 @@ class MyGridLayout(Widget):
             self.ids.upload_button.text = ""
             self.ids.process_button.opacity = 0
             self.ids.process_button.text = ""
+            self.ids.process_times_input_layout.opacity = 0
             self.ids.prevContainer.reset_image()
             
         else:
@@ -753,11 +753,8 @@ class MyGridLayout(Widget):
             self.ids.upload_button.text = "Exit"
             self.ids.process_button.opacity = 1
             self.ids.process_button.text = "Save"
-
+            self.ids.process_times_input_layout.opacity = 1
             self.ids.prevContainer.reset_image()
-        
-
-
     
     # Toggle images between processed and non-processed versions
     def toggle_images(self):
@@ -885,8 +882,37 @@ class DefaultButton(ButtonBehavior, Label):
         if value is None:
             Window.unbind(mouse_pos=self.on_mouse_pos)
 
+# Inspired from https://stackoverflow.com/questions/62155421/python-kivy-limit-input-values-between-two-numbers-with-a-textinput-filter
+# Input for number of processes done to an image
+class CountInput(TextInput):
     
+    def __init__(self, **kwargs):
+        super(CountInput, self).__init__(**kwargs)
+        self.bind(text=self.on_text)
+        self.bind(focus=self.on_focus)
+    
+    def on_text(self, instance, value):
+        app = App.get_running_app()
+        if (value != ''):
+            if hasattr(app.root, 'ids') and hasattr(app.root.ids.prevContainer.imgRef, 'process_count'):
+                app.root.ids.prevContainer.imgRef.process_count = int(value)
+                print("set val: ", app.root.ids.prevContainer.imgRef.process_count)
 
+    def on_focus(self, instance, value):
+        if self.text == "" and value == False:
+            self.text = "1"
+    
+    def insert_text(self, substring, from_undo=False):
+        if substring in "0,1,2,3,4,5,6,7,8,9":
+            cc, cr = self.cursor
+            text = self._lines[cr]
+            new_text = text[:cc] + substring + text[cc:]
+            if int(new_text) > 8:
+                return
+            elif int(new_text) < 1:
+                return
+            else:
+                super(CountInput, self).insert_text(substring, from_undo=from_undo)
 
 
 

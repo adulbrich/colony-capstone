@@ -125,7 +125,7 @@
     size_hint: (0.4, 1)
     orientation: 'vertical'
     padding: [0,0,20,0]
-    
+
     # Spacer widget for space at the top
     Widget:
         size_hint_y: None
@@ -394,6 +394,7 @@
             GridLayout:
                 cols: 3
                 size_hint: (1, 0.3)
+                # padding: 0, 0, 180, 0
                 id: upload_process_container
                 canvas.before:
                     Color:
@@ -406,12 +407,34 @@
                 AnchorLayout:
                     # padding: [padding_left, padding_top, padding_right, padding_bottom]
                     padding: 180, 0, 40, 0
+                    # padding: 20, 0, 10, 0
                     DefaultButton:
                         id: upload_button
                         text: "Upload"
-                        font_size: 80
+                        font_size: root.initialize_window_size()
                         size_hint: (1, 0.5)
                         on_release: root.file_explorer_or_cancel()
+                        background_color: (0.5, 0.5, 0.5, 0)
+                        canvas.before:
+                            Color:
+                                rgba: (0.3, 0.3, 0.3, 1)  # Button color
+                            RoundedRectangle:
+                                size: self.size
+                                pos: self.pos
+                                radius: [30]
+                
+                AnchorLayout:
+                    # padding: [padding_left, padding_top, padding_right, padding_bottom]
+                    padding: 10, 0, 10, 0
+                    # size_hint: (1, 1)
+                    size_hint: (0, 0)
+                    opacity: 0
+                    DefaultButton:
+                        id: reprocess_button
+                        text: "Re-Process"
+                        font_size: root.initialize_window_size()
+                        size_hint: (1, 0.5)
+                        on_release: root.reprocess_image()
                         background_color: (0.5, 0.5, 0.5, 0)
                         canvas.before:
                             Color:
@@ -423,10 +446,11 @@
 
                 AnchorLayout:
                     padding: 40, 0, 180, 0
+                    # padding: 10, 0, 20, 0
                     DefaultButton:
                         id: process_button
                         text: "Process"
-                        font_size: 80
+                        font_size: root.initialize_window_size()
                         size_hint: (1, 0.5)
                         on_release: root.on_process_button_press()
                         background_color: (0.5, 0.5, 0.5, 0)  # Makes the default button background transparent
@@ -437,7 +461,31 @@
                                 size: self.size
                                 pos: self.pos
                                 radius: [30]
-
+                    AnchorLayout:
+                        id: process_times_input_layout
+                        opacity: 0
+                        AnchorLayout:
+                            padding: self.width, 0, -130, 70
+                            anchor_x: 'right'
+                            anchor_y: 'center'
+                            Label:
+                                text:"# of Passes for\nThis Image(1-8)"
+                                halign: "center"
+                                font_size: 20
+                                size_hint:(0.6, 0.35)
+                        AnchorLayout:
+                            padding: self.width, 45, -120, 0
+                            anchor_x: 'right'
+                            anchor_y: 'center'
+                            CountInput:
+                                id: process_times
+                                text:"1"
+                                halign: "center"
+                                font_size: 40
+                                size_hint_x: 0.5
+                                size_hint_y: None
+                                height: 60
+                                input_filter : 'int'
 
 <ExportOptionsPopup@Popup>
     title: 'Export Options'
@@ -454,14 +502,14 @@
             on_release:
                 root.dismiss()
                 app.root.export_photos()
-        
+
         Button:
             text: 'Export CSV'
             size_hint_y: 0.4
             on_release:
                 root.dismiss()
                 app.root.export_csv()
-        
+
         AnchorLayout:
             anchor_x: 'right'
             size_hint_y: None
