@@ -71,11 +71,9 @@ class ImageContainerWidget(BoxLayout):
         self.name = '' #for naming the image
         self.is_selected = False
 
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            self.select_image()
-            return True
-        return super(ImageContainerWidget, self).on_touch_down(touch)
+    def handle_selection(self):
+        print(f"Handle selection called for widget with ID: {self.id}")
+        self.select_image()
 
     def select_image(self):
         for container in imageContainers:
@@ -560,8 +558,8 @@ class MyGridLayout(Widget):
             Factory.SaveChangesPopup().open()
 
 
-        def handle_delete(self, id):
-            print(len(imageContainers))
+    def handle_delete(self, id):
+        print(len(imageContainers))
 
         # Remove from imageContainers
         for i in range(len(imageContainers)):

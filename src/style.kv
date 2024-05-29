@@ -18,7 +18,7 @@
         Button:
             id: invisible_button
             opacity: 0
-            on_release: root.previewer_update() ; root.on_selection()
+            on_release: root.previewer_update() ; root.on_selection() ; root.handle_selection()
         BoxLayout:
             id: swap
             AsyncImage:
