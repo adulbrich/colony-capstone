@@ -550,8 +550,9 @@ class MyGridLayout(Widget):
                     container.replace.texture = imgReference.texture
             self.ids.process_times.text = str(container.imgRef.process_count)
 
-            # Update the name input field with the name of the selected image
-            self.infoContainer.ids.name_input.text = imgReference.name
+            if self.infoContainer is not None:
+                # Update the name input field with the name of the selected image
+                self.infoContainer.ids.name_input.text = imgReference.name
         else:
             self.tempPrev = imgReference
             self.tempUse = True
