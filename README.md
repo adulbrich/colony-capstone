@@ -19,7 +19,7 @@ The `docs/` directory holds a complete standalone internal documentation of the 
 
 The `src/` directory contains our codebase.
 
-The `LICENSE` is currently CC0 and will need to be changed by the end of the year.
+The `LICENSE` is currently using the MIT License.
 
 ## Installation
 
