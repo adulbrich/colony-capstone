@@ -15,7 +15,7 @@ Inside of this repository, you'll see the following folders and files:
 └── README.md
 ```
 
-The `docs/` directory holds a complete standalone internal documentation of the project.
+The `docs/` directory holds a complete standalone internal documentation of the project, for more information see the [full documentation](https://docs.google.com/document/d/1_mBcrXZcjpxBdoLSLTCOwpmKMvs5Z9kEyllgEAgpe-M/edit?usp=sharing).
 
 The `src/` directory contains our codebase.
 
