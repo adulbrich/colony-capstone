@@ -1,58 +1,48 @@
-# colony-capstone
+# Bacterial Colony Processing Software
 
-Low-Cost Bacterial Colony Processing System capstone repository for CS46X
+Welcome to the Bacterial Colony Processing Software repository! This software is designed for counting and analyzing bacterial colonies offline.
 
 ## Project Structure
 
-Inside of your repository, you'll see the following folders and files:
+Inside of this repository, you'll see the following folders and files:
 
 ```text
 .
 ├── docs/
 ├── src/
-├── wip/
 ├── .gitignore
 ├── LICENSE
 └── README.md
 ```
 
-The `docs/` directory hold a standalone Starlight + Astro website. Check below for more.
+The `docs/` directory holds a complete standalone internal documentation of the project.
 
-The `src/` directory will contain your codebase.
-
-The `wip/` directory is your Work in Progress directory. It contains assignment templates that you will modify/update during the year. You can add more files there that support your project (e.g., diagrams, design files, documents, reviews, progress reports, etc.)
+The `src/` directory contains our codebase.
 
 The `LICENSE` is currently CC0 and will need to be changed by the end of the year.
 
-## Grading
+## Installation
 
-Throughout the year, everyone on the team will be evaluated on their writing (individually). Instructors can review writing assignments through GitHub Pull Requests (PRs).
+To get started, clone, fork, or download the repository to your local machine. Then, navigate to the repository directory and run the following commands in your terminal:
+```
+pip install -r requirements.txt
+python colonyGUI.py
+```
 
-Writing assignments will include:
+## Features
 
-- documentation (through PRs)
-- product requirements (through PRs)
-- user stories (using GitHub Issues)
-- software development process (through PRs)
-- progress reports
+- **Adding Colonies**: Easily add colonies to your images for analysis.
+- **Removing Colonies**: Remove incorrectly identified colonies with a simple click.
+- **Toggle Image View**: Switch between pre-processed and post-processed image views.
+- **Zoom In/Out**: Zoom in or out on images for detailed inspection.
+- **Fullscreen**: View images in fullscreen mode for better visualization.
 
-Whenever an assignment can be reviwed in a GitHub PR, please assign your instructors for review.
+## Usage
 
-## A Few Things to Address
+Refer to the provided [tutorials and walkthroughs](https://docs.google.com/document/d/1j8CY2eM663Y6jzoCfMsfHYmB2fGVRKJ2AREcuj-ovyI/edit?usp=sharing) for detailed instructions on using the software.
 
-Once you've cloned, forked, or simply copied the content of this repository to your own:
+## Support
 
-- Invite your co-contributors/co-developers to make changes to the repository
-- Change the license (currently CC0), discuss that with your project partner or sponsor
-- Initialize the repository for your programming language (your code should probably end up in `src/`), including updating the `.gitignore`
-- Learn to build the `docs/` (see below) or opt for another documentation solution
-- Check out the course templates in `wip/`
-- Create your first issues and organise them in a project/kanban board
-
-## Building the Docs
-
-Your docs template is Starlight. It's a template for [Astro](https://astro.build/).
-
-Astro is a very fast and efficient framework, in particular for static content (like docs or a product page).
-
-This repository `docs/` directory was already initialized with Starlight. Check the `docs/README.md` file to get started.
+For any issues or questions, please contact:
+- Andres Perez (General Support Lead): perezand@oregonstate.edu
+- Owen Williamson (Colony Counting Detection Support): willowen@oregonstate.edu
