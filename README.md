@@ -2,6 +2,12 @@
 
 Welcome to the Bacterial Colony Processing Software repository! This software is designed for counting and analyzing bacterial colonies offline.
 
+## Notes
+
+From Alex Ulbrich:
+
+- The processed image is rotated. Hence when toggling between the original and the processed image, we can't compare easily.
+
 ## Project Structure
 
 Inside of this repository, you'll see the following folders and files:

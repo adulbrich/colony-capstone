@@ -237,7 +237,7 @@ class PreviewerContainer(Scatter):
         # self.imgRef.texture = texture
     
     def remove_colony(self, pos):
-        array_pos = np.cfloat(np.array([[pos[0], pos[1]]]))
+        array_pos = np.complex128(np.array([[pos[0], pos[1]]]))
         colin = np.delete(self.editedColonies[0], 2, 1)    # delete third row of colonies with radius sizes
         colin = colin.astype(float)
 
